@@ -14,7 +14,6 @@ const db = mysql.createPool({
     password: "7lT6931kjq",
     database: "sql6637648"
 })
-const upload = multer({ dest: 'uploads/' });
 const bucketName = 'mechanical_keyboard'
 const storage = new Storage();
 app.use(cors());
@@ -38,9 +37,8 @@ app.get("/user",(req,res) =>{
     })
 })
 
-app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
-
-app.post('/api/upload', upload.single('image'), async (req, res) => {
+const upload = multer({ dest: 'uploads/' });
+app.post('/api/upload',upload.single('image'), async (req, res) => {
   const imagePath = req.file.path;
   const Id_Order = req.body.Id_Order;
   const prev_image = req.body.Prev_Image;
