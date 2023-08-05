@@ -37,15 +37,6 @@ app.get("/user",(req,res) =>{
         res.send(result);
     })
 })
-const storage1 = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  },
-});
-
 
 app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 
