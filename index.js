@@ -44,13 +44,6 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
   const imagePath = req.file.path;
   const Id_Order = req.body.Id_Order;
   const prev_image = req.body.Prev_Image;
-
-  fs.unlink(prev_image, (unlinkErr) => {
-    if (unlinkErr) {
-      console.error('Error deleting the image:', unlinkErr);
-    }
-  });
-
   // Function to upload the image to Google Cloud Storage
   async function uploadImageToGCS(imagePath) {
     try {
