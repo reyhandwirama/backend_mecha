@@ -222,68 +222,70 @@ app.post("/getId_Cart", (req, res) => {
   });
 
 app.post("/order", (req, res) => {
-    const {Id_Order,Id_User,Id_Product, Qty, Ttl_Belanja} = req.body;
+    const { Id_Order, Id_User, Id_Product, Qty, Ttl_Belanja } = req.body;
     const sqlQuery1 = `INSERT INTO orderdetail (Id_Order, Id_Product, Qty, Ttl_Belanja) VALUES("${Id_Order}","${Id_Product}",${Qty},${Ttl_Belanja});`;
-    const sqlQuery2 = `INSERT IGNORE INTO orders (Id_Order, Id_User,status,dataImage,batasorder) VALUES("${Id_Order}","${Id_User}","Proses Ongkir","","");`;
+    const sqlQuery2 = `INSERT IGNORE INTO orders (Id_Order, Id_User, status, dataImage, batasorder) VALUES("${Id_Order}","${Id_User}","Proses Ongkir","","");`;
     const sqlQuery3 = `DELETE FROM cart WHERE Id_User="${Id_User}"`;
     const sqlQuery4 = `DELETE FROM cartdetail WHERE Id_User="${Id_User}"`;
-  
-    try{
-      db.query(sqlQuery1, (err) => {
-        if (err) {  
-          console.error('Error submitting data:', err);
-          res.status(500).json({ message: `${err}` });
-          return;
-        }
-  
-      });
-    }
-    catch(error){
-      console.log(error);  
-    }
-    try{
 
-      db.query(sqlQuery2, (err) => {
-        if (err) {
-          console.error('Error submitting data kedua :', err);
-          res.status(500).json({ message: `${err}` });
-          return;
-        }
-      });
-    }
-    catch(error){
-      console.log(error);
-    }
-    try{
-
-      db.query(sqlQuery3, (err) => {
-        if (err) {
-          console.error('Error submitting data ketiga:', err);
-          res.status(500).json({ message: `${err}` });
-          return;
-        }
-      });
-            
-    }
-    catch(error){
-      console.log(error);
+    try {
+        db.query(sqlQuery1, (err) => {
+            if (err) {
+                console.error('Error submitting data:', err);
+                res.status(500).json({ message: `${err}` });
+                return;
+            }
+            // Close the connection after the first query is executed
+            db.end();
+        });
+    } catch (error) {
+        console.log(error);
     }
 
-    try{
-      db.query(sqlQuery4, (err,result) => {
-        if (err) {
-          console.error('Error submitting data keempat:', err);
-          res.status(500).json({ message: `${err}` });
-          return;
-        }
-        res.status(200).json({ message: 'Data deleted successfully' });
-      });
+    try {
+        db.query(sqlQuery2, (err) => {
+            if (err) {
+                console.error('Error submitting data kedua:', err);
+                res.status(500).json({ message: `${err}` });
+                return;
+            }
+            // Close the connection after the second query is executed
+            db.end();
+        });
+    } catch (error) {
+        console.log(error);
     }
-    catch(error){
-      console.log(error);
+
+    try {
+        db.query(sqlQuery3, (err) => {
+            if (err) {
+                console.error('Error submitting data ketiga:', err);
+                res.status(500).json({ message: `${err}` });
+                return;
+            }
+            // Close the connection after the third query is executed
+            db.end();
+        });
+
+    } catch (error) {
+        console.log(error);
+    }
+
+    try {
+        db.query(sqlQuery4, (err, result) => {
+            if (err) {
+                console.error('Error submitting data keempat:', err);
+                res.status(500).json({ message: `${err}` });
+                return;
+            }
+            // Close the connection after the fourth query is executed
+            db.end();
+            res.status(200).json({ message: 'Data deleted successfully' });
+        });
+    } catch (error) {
+        console.log(error);
     }
 });
-
 app.post("/user", (req, res) => {
     const { Username, Password} = req.body;
     sqlQuery = `SELECT * FROM user WHERE Username="${Username}" AND Password="${Password}";`;
