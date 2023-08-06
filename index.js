@@ -14,16 +14,10 @@ const db = mysql.createPool({
     password: "7lT6931kjq",
     database: "sql6637648"
 })
-const upload = multer({ dest: 'uploads/' });
-const bucketName = 'mechanical_keyboard'
-const storage = new Storage();
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.urlencoded({extended:true}));
 
-app.get("/", (req,res) =>{
-  res.json({message:"Success"})
-})
 app.get("/produk", (req,res) =>{
     const sqlSelect = "SELECT * FROM produk";
     db.query(sqlSelect, (err, result) =>{
@@ -37,7 +31,7 @@ app.get("/user",(req,res) =>{
         res.send(result);
     })
 })
-const storage1 = multer.diskStorage({
+const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'uploads/');
   },
@@ -46,70 +40,34 @@ const storage1 = multer.diskStorage({
   },
 });
 
-
+const upload = multer({ storage });
 app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 
-app.post('/api/upload', upload.single('image'), async (req, res) => {
+app.post('/api/upload', upload.single('image'), (req,res)=>{
   const imagePath = req.file.path;
   const Id_Order = req.body.Id_Order;
-  const prev_image = req.body.Prev_Image;
+  const prev_image = req.body.Prev_Image
+
 
   fs.unlink(prev_image, (unlinkErr) => {
     if (unlinkErr) {
       console.error('Error deleting the image:', unlinkErr);
     }
+
   });
 
-  // Function to upload the image to Google Cloud Storage
-  async function uploadImageToGCS(imagePath) {
-    try {
-      // Generate a unique filename (you can use any logic here, like adding timestamp)
-      const filename = `photo_${Date.now()}.jpg`;
-      const file = storage.bucket(bucketName).file(prev_image);
-      try {
-        await file.delete();
-        console.log(`Previous image "${prev_image}" has been removed from Google Cloud Storage.`);
-      } catch (deleteErr) {
-        // Handle the error if the file couldn't be deleted (e.g., file not found)
-        console.error('Error deleting the previous image:', deleteErr);
-        // You can decide how to handle the error. For example, you might log it and proceed.
-      }
-      // Upload the image to Google Cloud Storage
-      try {
-        await storage.bucket(bucketName).upload(imagePath, {
-          destination: filename,
-        }); 
-      } catch (uploadErr) {
-        console.error('Error uploading photo to Google Cloud Storage:', uploadErr);
-        res.status(500).json({ error: 'Error uploading the image to Google Cloud Storage' });
-      }
+  const query = "UPDATE orders SET dataImage=?,status=?,batasorder=?  WHERE Id_Order=?"
 
-      // Get the public URL of the uploaded image
-      return filename;
-    } catch (err) {
-      console.error('Error uploading photo to Google Cloud Storage:', err);
-      throw err;
+  db.query(query, [imagePath,"Sedang Diproses","",Id_Order],(err,result) => {
+    if (err) {
+      console.error('Error saving the image to the database:', err);
+      return res.status(500).json({ error: 'Error saving the image to the database' });
     }
-  }
 
-  try {
-    // Upload the new image to Google Cloud Storage
-    const gcsUrl = await uploadImageToGCS(imagePath);
+    res.json({ message: 'Image uploaded and saved to the database successfully!' });
+  })
 
-    // Update the image URL in the database
-    const query = "UPDATE orders SET dataImage=?, status=?, batasorder=? WHERE Id_Order=?";
-    db.query(query, [gcsUrl, "Sedang Diproses", "", Id_Order], (dbErr, result) => {
-      if (dbErr) {
-        console.error('Error saving the image URL to the database:', dbErr);
-        return res.status(500).json({ error: 'Error saving the image URL to the database' });
-      }
-
-      res.json({ message: 'Image uploaded and saved to Google Cloud Storage and the database successfully!' });
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Error uploading the image to Google Cloud Storage' });
-  }
-});
+})
 
 app.get('/api/getData', (req, res) => {
   const query = 'SELECT dataImage AS imagePath FROM orders';
@@ -397,6 +355,7 @@ app.post("/checkout", (req,res) =>{
         }
   })
 })
+
 
 const port = process.env.PORT || 5000;
 app.listen(port, () =>{
