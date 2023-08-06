@@ -228,6 +228,7 @@ app.post("/order", (req, res) => {
     const sqlQuery3 = `DELETE FROM cart WHERE Id_User="${Id_User}"`;
     const sqlQuery4 = `DELETE FROM cartdetail WHERE Id_User="${Id_User}"`;
   
+    try{
       db.query(sqlQuery1, (err) => {
         if (err) {  
           console.error('Error submitting data:', err);
@@ -236,23 +237,39 @@ app.post("/order", (req, res) => {
         }
   
       });
+    }
+    catch(error){
+      console.log(error);  
+    }
+    try{
+
       db.query(sqlQuery2, (err) => {
         if (err) {
           console.error('Error submitting data kedua :', err);
           res.status(500).json({ message: `${err}` });
           return;
         }
-  
       });
+    }
+    catch(error){
+      console.log(error);
+    }
+    try{
+
       db.query(sqlQuery3, (err) => {
         if (err) {
           console.error('Error submitting data ketiga:', err);
           res.status(500).json({ message: `${err}` });
           return;
         }
-  
       });
+            
+    }
+    catch(error){
+      console.log(error);
+    }
 
+    try{
       db.query(sqlQuery4, (err,result) => {
         if (err) {
           console.error('Error submitting data keempat:', err);
@@ -261,6 +278,10 @@ app.post("/order", (req, res) => {
         }
         res.status(200).json({ message: 'Data deleted successfully' });
       });
+    }
+    catch(error){
+      console.log(error);
+    }
 });
 
 app.post("/user", (req, res) => {
