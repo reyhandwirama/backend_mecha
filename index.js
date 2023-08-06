@@ -169,7 +169,7 @@ app.get("/getId_Order", (req, res) => {
   });
 
 app.get("/getOrder", (req, res) => {
-      sqlQuery = `SELECT * FROM orderdetail ;`;
+      sqlQuery = `SELECT * FROM orderdetail;`;
 
       db.query(sqlQuery, (err, result) => {
         if (err) {
@@ -222,10 +222,7 @@ app.post("/getId_Cart", (req, res) => {
 
   app.post("/order", (req, res) => {
     const { Id_Order, Id_User, Id_Product, Qty, Ttl_Belanja } = req.body;
-    const sqlQuery1 = `INSERT INTO orderdetail (Id_Order, Id_Product, Qty, Ttl_Belanja) VALUES("${Id_Order}","${Id_Product}",${Qty},${Ttl_Belanja});
-    INSERT IGNORE INTO orders (Id_Order, Id_User, status, dataImage, batasorder) VALUES("${Id_Order}","${Id_User}","Proses Ongkir","","");
-    DELETE FROM cart WHERE Id_User="${Id_User}";
-    DELETE FROM cartdetail WHERE Id_User="${Id_User}";`;
+    const sqlQuery1 = `INSERT INTO orderdetail (Id_Order, Id_Product, Qty, Ttl_Belanja) VALUES("${Id_Order}","${Id_Product}",${Qty},${Ttl_Belanja});INSERT IGNORE INTO orders (Id_Order, Id_User, status, dataImage, batasorder) VALUES("${Id_Order}","${Id_User}","Proses Ongkir","","");DELETE FROM cart WHERE Id_User="${Id_User}";DELETE FROM cartdetail WHERE Id_User="${Id_User}";`;
 
     try {
         db.query(sqlQuery1, (err) => {
