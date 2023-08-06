@@ -42,7 +42,7 @@ app.post('/api/upload', async (req, res) => {
         console.error('Error saving the image URL to the database:', dbErr);
         return res.status(500).json({ error: 'Error saving the image URL to the database' });
       }
-
+      console.log("Berhasil Diupload")
       res.json({ message: 'Image uploaded and saved to Google Cloud Storage and the database successfully!' });
     });
   } catch (error) {
@@ -62,7 +62,7 @@ app.get('/api/getData', (req, res) => {
     if (result.length === 0) {
       return res.status(404).json({ error: 'Image data not found' });
     }
-
+    console.log("Query Berhasil")
     const data = result[0];
     res.json(data);
   });
@@ -80,7 +80,7 @@ app.get('/api/getData', (req, res) => {
     if (result.length === 0) {
       return res.status(404).json({ error: 'Image data not found' });
     }
-
+    console.log(result);
     const data = result[0];
     res.json(data);
   });
@@ -101,12 +101,14 @@ app.post("/removeOrder", (req,res) =>{
   db.query(sqlQuery,[Id_Order],(err,result) =>{
     if(err){
       res.status(500).json({message: `${err}`});
+
     }
     db.query(sqlQuery1,[Id_Order],(err,result) =>{
       if(err){
         res.status(500).json({message: `${err}`});
       }
     })
+    console.log(result);
     res.send(result);
   })
 })
@@ -221,7 +223,7 @@ app.post("/getId_Cart", (req, res) => {
       });
   });
 
-app.post("/order", (req, res) => {
+  app.post("/order", (req, res) => {
     const { Id_Order, Id_User, Id_Product, Qty, Ttl_Belanja } = req.body;
     const sqlQuery1 = `INSERT INTO orderdetail (Id_Order, Id_Product, Qty, Ttl_Belanja) VALUES("${Id_Order}","${Id_Product}",${Qty},${Ttl_Belanja});`;
     const sqlQuery2 = `INSERT IGNORE INTO orders (Id_Order, Id_User, status, dataImage, batasorder) VALUES("${Id_Order}","${Id_User}","Proses Ongkir","","");`;
@@ -324,9 +326,11 @@ app.post("/update", (req,res) =>{
   const sqlUpdate = `UPDATE user SET username="${Username}",password="${Password}",email="${Email}",notelp="${Notelp}",alamat="${Alamat}" where Id_User="${Id_User}"`;
   db.query(sqlUpdate,(err,result) =>{
       if (err) {
+          console.log("Gagal Update");
           console.error('Error submitting data:', err);
           res.status(500).json({ message: 'Error submitting data' });
         } else {
+          console.log("Berhasil update")
           res.status(200).json({ message: 'Data update successfully' });
         }
   })
