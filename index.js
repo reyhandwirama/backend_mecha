@@ -5,24 +5,17 @@ const app = express();
 const mysql = require('mysql');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
-const { Storage } = require('@google-cloud/storage');
-process.env.GOOGLE_APPLICATION_CREDENTIALS = './scenic-adapter-395007-04e559844696.json';
 const db = mysql.createPool({
     host: "sql6.freesqldatabase.com",
     user: "sql6637648",
     password: "7lT6931kjq",
     database: "sql6637648"
 })
-const bucketName = 'mechanical_keyboard'
-const storage = new Storage();
+
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.urlencoded({extended:true}));
 
-app.get("/", (req,res) =>{
-  res.json({message:"Success"})
-})
 app.get("/produk", (req,res) =>{
     const sqlSelect = "SELECT * FROM produk";
     db.query(sqlSelect, (err, result) =>{
@@ -37,50 +30,14 @@ app.get("/user",(req,res) =>{
     })
 })
 
-const upload = multer({ dest: 'uploads/' });
-app.post('/api/upload',upload.single('image'), async (req, res) => {
-  const imagePath = req.file.path;
+app.post('/api/upload', async (req, res) => {
   const Id_Order = req.body.Id_Order;
   const prev_image = req.body.Prev_Image;
   // Function to upload the image to Google Cloud Storage
-  async function uploadImageToGCS(imagePath) {
-    try {
-      // Generate a unique filename (you can use any logic here, like adding timestamp)
-      const filename = `photo_${Date.now()}.jpg`;
-      const file = storage.bucket(bucketName).file(prev_image);
-      try {
-        await file.delete();
-        console.log(`Previous image "${prev_image}" has been removed from Google Cloud Storage.`);
-      } catch (deleteErr) {
-        // Handle the error if the file couldn't be deleted (e.g., file not found)
-        console.error('Error deleting the previous image:', deleteErr);
-        // You can decide how to handle the error. For example, you might log it and proceed.
-      }
-      // Upload the image to Google Cloud Storage
-      try {
-        await storage.bucket(bucketName).upload(imagePath, {
-          destination: filename,
-        }); 
-      } catch (uploadErr) {
-        console.error('Error uploading photo to Google Cloud Storage:', uploadErr);
-        res.status(500).json({ error: 'Error uploading the image to Google Cloud Storage' });
-      }
-
-      // Get the public URL of the uploaded image
-      return filename;
-    } catch (err) {
-      console.error('Error uploading photo to Google Cloud Storage:', err);
-      throw err;
-    }
-  }
-
   try {
-    // Upload the new image to Google Cloud Storage
-    const gcsUrl = await uploadImageToGCS(imagePath);
-
     // Update the image URL in the database
     const query = "UPDATE orders SET dataImage=?, status=?, batasorder=? WHERE Id_Order=?";
-    db.query(query, [gcsUrl, "Sedang Diproses", "", Id_Order], (dbErr, result) => {
+    db.query(query, [prev_image, "Sedang Diproses", "", Id_Order], (dbErr, result) => {
       if (dbErr) {
         console.error('Error saving the image URL to the database:', dbErr);
         return res.status(500).json({ error: 'Error saving the image URL to the database' });
@@ -111,6 +68,24 @@ app.get('/api/getData', (req, res) => {
   });
 });
 
+app.get('/api/getData', (req, res) => {
+  const query = 'SELECT dataImage AS imagePath FROM orders';
+
+  db.query(query, (err, result) => {
+    if (err) {
+      console.error('Error fetching data from the database:', err);
+      return res.status(500).json({ error: 'Error fetching data from the database' });
+    }
+
+    if (result.length === 0) {
+      return res.status(404).json({ error: 'Image data not found' });
+    }
+
+    const data = result[0];
+    res.json(data);
+  });
+});
+
 app.get("/cart", (req,res) =>{
     const sqlSelect = "SELECT * FROM cartdetail";
     db.query(sqlSelect, (err, result) =>{
@@ -120,7 +95,6 @@ app.get("/cart", (req,res) =>{
 
 app.post("/removeOrder", (req,res) =>{
   const {Id_Order} = req.body;
-  console.log(Id_Order);
   sqlQuery = "Delete From orders WHERE Id_Order=?";
   sqlQuery1 = "Delete From orderdetail WHERE Id_Order=?";
   
@@ -159,9 +133,7 @@ app.post("/login", (req, res) => {
 
 app.post("/updateOrder", (req, res) => {
     const { Id_Order,Kurir,Resi,Notes,Ongkir,BatasOrder} = req.body;
-    console.log(BatasOrder);
       sqlQuery = `UPDATE orders SET kurir="${Kurir}", noresi="${Resi}", status="${Notes}", ongkir=${Ongkir}, batasorder="${BatasOrder}"  WHERE Id_Order="${Id_Order}";`;
-      console.log(sqlQuery);
       db.query(sqlQuery, (err, result) => {
         if (err) {
           console.error('Error submitting data:', err);
@@ -287,7 +259,6 @@ app.post("/order", (req, res) => {
           res.status(500).json({ message: `${err}` });
           return;
         }
-        console.log(result);
         res.status(200).json({ message: 'Data deleted successfully' });
       });
 });
@@ -320,7 +291,6 @@ app.post("/quantity", (req,res) =>{
             console.error('Error submitting data:', err);
             res.status(500).json({ message: 'Error submitting data' });
           } else {
-            console.log(result);
             res.status(200).json({ message: 'Data update successfully' });
           }
     })
@@ -334,7 +304,6 @@ app.post("/update", (req,res) =>{
           console.error('Error submitting data:', err);
           res.status(500).json({ message: 'Error submitting data' });
         } else {
-          console.log(result);
           res.status(200).json({ message: 'Data update successfully' });
         }
   })
@@ -348,7 +317,6 @@ app.post("/remover", (req,res) =>{
             console.error('Error submitting data:', err);
             res.status(500).json({ message: 'Error submitting data' });
           } else {
-            console.log(result);
             res.status(200).json({ message: 'Data update successfully' });
           }
     })
@@ -374,7 +342,6 @@ app.post("/checkout", (req,res) =>{
           console.error('Error submitting data:', err);
           res.status(500).json({ message: 'Error submitting data' });
         } else {
-          console.log(result);
           res.status(200).json({ message: 'Data submitted successfully' });
         }
   })
