@@ -4,12 +4,11 @@ const cors = require('cors');
 const app = express();
 const mysql = require('mysql');
 const multer = require('multer');
-const path = require('path');
 const db = mysql.createPool({
-    host: "sql6.freesqldatabase.com",
-    user: "sql6637648",
-    password: "7lT6931kjq",
-    database: "sql6637648"
+  host: "sql6.freesqldatabase.com",
+  user: "sql6637648",
+  password: "7lT6931kjq",
+  database: "sql6637648"
 })
 
 app.use(cors());
@@ -93,22 +92,25 @@ app.get("/cart", (req,res) =>{
     })
 })
 
-app.post("/removeOrder", (req,res) =>{
-  const {Id_Order} = req.body;
-  db.query("Delete From orders WHERE Id_Order=?;Delete From orderdetail WHERE Id_Order=?;",[Id_Order,Id_Order],(err,result) =>{
-    if(err){
-      res.status(500).json({message: `${err}`});
+app.post("/removeOrder", (req, res) => {
+  const { Id_Order } = req.body;
+  const sqlQuery = "DELETE FROM orders WHERE Id_Order=?";
+  const sqlQuery1 = "DELETE FROM orderdetail WHERE Id_Order=?";
 
+  db.query(sqlQuery, [Id_Order], (err, result) => {
+    if (err) {
+      return res.status(500).json({ message: `${err}` });
     }
-    db.query(sqlQuery1,[Id_Order],(err,result) =>{
-      if(err){
-        res.status(500).json({message: `${err}`});
+
+    db.query(sqlQuery1, [Id_Order], (err, result) => {
+      if (err) {
+        return res.status(500).json({ message: `${err}` });
       }
-    })
-    console.log(result);
-    res.send(result);
-  })
-})
+
+      res.send(result);
+    });
+  });
+});
 
 app.post("/login", (req, res) => {
     const { Username,Password} = req.body;
@@ -222,8 +224,10 @@ app.post("/getId_Cart", (req, res) => {
 
   app.post("/order", (req, res) => {
     const { Id_Order, Id_User, Id_Product, Qty, Ttl_Belanja } = req.body;
-    const sqlQuery1 = `INSERT INTO orderdetail (Id_Order, Id_Product, Qty, Ttl_Belanja) VALUES("${Id_Order}","${Id_Product}",${Qty},${Ttl_Belanja});INSERT IGNORE INTO orders (Id_Order, Id_User, status, dataImage, batasorder) VALUES("${Id_Order}","${Id_User}","Proses Ongkir","","");DELETE FROM cart WHERE Id_User="${Id_User}";DELETE FROM cartdetail WHERE Id_User="${Id_User}";`;
-
+    const sqlQuery1 = `INSERT INTO orderdetail (Id_Order, Id_Product, Qty, Ttl_Belanja) VALUES("${Id_Order}","${Id_Product}",${Qty},${Ttl_Belanja});`;
+    const sqlQuery2 = `INSERT IGNORE INTO orders (Id_Order, Id_User, status, dataImage, batasorder) VALUES("${Id_Order}","${Id_User}","Proses Ongkir","","");`;
+    const sqlQuery3 = `DELETE FROM cart WHERE Id_User="${Id_User}";`;
+    const sqlQuery4 = `DELETE FROM cartdetail WHERE Id_User="${Id_User}";`;
     try {
         db.query(sqlQuery1, (err) => {
             if (err) {
@@ -232,11 +236,46 @@ app.post("/getId_Cart", (req, res) => {
                 return;
             }
             // Close the connection after the first query is executed
-            db.end();
         });
     } catch (error) {
         console.log(error);
     }
+    try {
+      db.query(sqlQuery2, (err) => {
+          if (err) {
+              console.error('Error submitting data:', err);
+              res.status(500).json({ message: `${err}` });
+              return;
+          }
+          // Close the connection after the first query is executed
+      });
+  } catch (error) {
+      console.log(error);
+  }
+  try {
+    db.query(sqlQuery3, (err) => {
+        if (err) {
+            console.error('Error submitting data:', err);
+            res.status(500).json({ message: `${err}` });
+            return;
+        }
+        // Close the connection after the first query is executed
+    });
+} catch (error) {
+    console.log(error);
+}
+try {
+  db.query(sqlQuery4, (err) => {
+      if (err) {
+          console.error('Error submitting data:', err);
+          res.status(500).json({ message: `${err}` });
+          return;
+      }
+      // Close the connection after the first query is executed
+  });
+} catch (error) {
+  console.log(error);
+}
 });
 app.post("/user", (req, res) => {
     const { Username, Password} = req.body;
