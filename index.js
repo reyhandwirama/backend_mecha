@@ -1,14 +1,15 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const app = express();
 const mysql = require('mysql');
-const multer = require('multer');
+
 const db = mysql.createPool({
-  host: "sql6.freesqldatabase.com",
-  user: "sql6637648",
-  password: "7lT6931kjq",
-  database: "sql6637648"
+  host: process.env.HOST,
+  user: process.env.USER,
+  password: process.env.PASSWORD,
+  database: process.env.DATABASE,
 })
 
 app.use(cors());
