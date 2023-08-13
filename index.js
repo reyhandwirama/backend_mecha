@@ -95,21 +95,17 @@ app.get("/cart", (req,res) =>{
 
 app.post("/removeOrder", (req, res) => {
   const { Id_Order } = req.body;
-  const sqlQuery = "DELETE FROM orders WHERE Id_Order=?";
-  const sqlQuery1 = "DELETE FROM orderdetail WHERE Id_Order=?";
+  const sqlQuery = `DELETE FROM orders WHERE Id_Order="${Id_Order}"`;
+  const sqlQuery1 = `DELETE FROM orderdetail WHERE Id_Order="${Id_Order}"`;
 
-  db.query(sqlQuery, [Id_Order], (err, result) => {
+  db.query(sqlQuery,sqlQuery1, (err, result) => {
     if (err) {
+      console.log(err);
       return res.status(500).json({ message: `${err}` });
     }
-
-    db.query(sqlQuery1, [Id_Order], (err, result) => {
-      if (err) {
-        return res.status(500).json({ message: `${err}` });
-      }
-
-      res.send(result);
-    });
+    console.log(result);
+    res.send(result[0]);
+    res.send(result[1]);
   });
 });
 
@@ -135,6 +131,7 @@ app.post("/login", (req, res) => {
 
 app.post("/updateOrder", (req, res) => {
     const { Id_Order,Kurir,Resi,Notes,Ongkir,BatasOrder} = req.body;
+    console.log(Ongkir);
       sqlQuery = `UPDATE orders SET kurir="${Kurir}", noresi="${Resi}", status="${Notes}", ongkir=${Ongkir}, batasorder="${BatasOrder}"  WHERE Id_Order="${Id_Order}";`;
       db.query(sqlQuery, (err, result) => {
         if (err) {
@@ -223,60 +220,46 @@ app.post("/getId_Cart", (req, res) => {
       });
   });
 
-  app.post("/order", (req, res) => {
-    const { Id_Order, Id_User, Id_Product, Qty, Ttl_Belanja } = req.body;
-    const sqlQuery1 = `INSERT INTO orderdetail (Id_Order, Id_Product, Qty, Ttl_Belanja) VALUES("${Id_Order}","${Id_Product}",${Qty},${Ttl_Belanja});`;
-    const sqlQuery2 = `INSERT IGNORE INTO orders (Id_Order, Id_User, status, dataImage, batasorder) VALUES("${Id_Order}","${Id_User}","Proses Ongkir","","");`;
-    const sqlQuery3 = `DELETE FROM cart WHERE Id_User="${Id_User}";`;
-    const sqlQuery4 = `DELETE FROM cartdetail WHERE Id_User="${Id_User}";`;
-    try {
-        db.query(sqlQuery1, (err) => {
-            if (err) {
-                console.error('Error submitting data:', err);
-                res.status(500).json({ message: `${err}` });
-                return;
-            }
-            // Close the connection after the first query is executed
-        });
-    } catch (error) {
-        console.log(error);
-    }
-    try {
-      db.query(sqlQuery2, (err) => {
-          if (err) {
-              console.error('Error submitting data:', err);
-              res.status(500).json({ message: `${err}` });
-              return;
-          }
-          // Close the connection after the first query is executed
-      });
-  } catch (error) {
-      console.log(error);
-  }
-  try {
-    db.query(sqlQuery3, (err) => {
-        if (err) {
-            console.error('Error submitting data:', err);
-            res.status(500).json({ message: `${err}` });
-            return;
-        }
-        // Close the connection after the first query is executed
-    });
-} catch (error) {
-    console.log(error);
-}
-try {
-  db.query(sqlQuery4, (err) => {
+app.post("/order", (req, res) => {
+    const { Id_Order, Id_Product, Qty, Ttl_Belanja } = req.body;
+    const sqlQuery1 = `INSERT INTO orderdetail (Id_Order, Id_Product, Qty, Ttl_Belanja) VALUES("${Id_Order}","${Id_Product}",${Qty},${Ttl_Belanja})`;
+    
+    db.query(sqlQuery1, (err, result) => {
       if (err) {
-          console.error('Error submitting data:', err);
-          res.status(500).json({ message: `${err}` });
-          return;
+        console.log(err);
+        return res.status(500).json({ message: `${err}` });
       }
-      // Close the connection after the first query is executed
+      console.log(result);
+      res.send(result[0]);
+      res.send(result[1]);
+      res.send(result[2]);
+      res.send(result[3]);
+      return result;
+    });
+
+});
+
+app.post("/orders", (req, res) => {
+  const { Id_Order, Id_User} = req.body;
+  const sqlQuery2 = `INSERT INTO orders (Id_Order, Id_User, status, dataImage, noresi,kurir,ongkir) VALUES("${Id_Order}","${Id_User}","Proses Ongkir","","","",0)`;
+  const sqlQuery3 = `DELETE FROM cart WHERE Id_User="${Id_User}"`;
+  const sqlQuery4 = `DELETE FROM cartdetail WHERE Id_User="${Id_User}"`;
+  db.query(sqlQuery2,sqlQuery3, (err, result) => {
+    if (err) {
+      console.log(err);
+      return res.status(500).json({ message: `${err}` });
+    }
+    db.query(sqlQuery4, (err, result) => {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({ message: `${err}` });
+      }
+      console.log(result);
+      
+    });
+    res.send(result);
   });
-} catch (error) {
-  console.log(error);
-}
+
 });
 app.post("/user", (req, res) => {
     const { Username, Password} = req.body;
