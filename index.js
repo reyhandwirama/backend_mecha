@@ -103,9 +103,7 @@ app.post("/removeOrder", (req, res) => {
       console.log(err);
       return res.status(500).json({ message: `${err}` });
     }
-    console.log(result);
-    res.send(result[0]);
-    res.send(result[1]);
+    res.send(result);
   });
 });
 
