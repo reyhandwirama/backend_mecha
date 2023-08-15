@@ -158,7 +158,7 @@ app.get("/getId_Order", (req, res) => {
         }
   
         if (result.length === 0) {
-          res.status(401).json({ error: 'Invalid username or password' });
+          res.status(401).json({ error: 'No Data ' });
           return;
         }
   
@@ -238,8 +238,8 @@ app.post("/order", (req, res) => {
 });
 
 app.post("/orders", (req, res) => {
-  const { Id_Order, Id_User} = req.body;
-  const sqlQuery2 = `INSERT INTO orders (Id_Order, Id_User, status, dataImage, noresi,kurir,ongkir) VALUES("${Id_Order}","${Id_User}","Proses Ongkir","","","",0)`;
+  const { Id_Order, Id_User, Alamat} = req.body;
+  const sqlQuery2 = `INSERT INTO orders (Id_Order, Id_User, status, dataImage, noresi,kurir,ongkir,alamat) VALUES("${Id_Order}","${Id_User}","Proses Ongkir","","","",0,"${Alamat}")`;
   const sqlQuery3 = `DELETE FROM cart WHERE Id_User="${Id_User}"`;
   const sqlQuery4 = `DELETE FROM cartdetail WHERE Id_User="${Id_User}"`;
   db.query(sqlQuery2,sqlQuery3, (err, result) => {
