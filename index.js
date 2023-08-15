@@ -33,12 +33,14 @@ app.get("/user",(req,res) =>{
 app.post('/api/upload', async (req, res) => {
   const Id_Order = req.body.Id_Order;
   const prev_image = req.body.Prev_Image;
-  const Alamat = req.body.Prev_Alamat;
+  const Alamat = req.body.Alamat;
+  const Notes = req.body.Notes;
+  console.log(Notes);
   // Function to upload the image to Google Cloud Storage
   try {
     // Update the image URL in the database
     const query = "UPDATE orders SET dataImage=?, status=?, batasorder=?, alamat=? WHERE Id_Order=?";
-    db.query(query, [prev_image, "Sedang Diproses", "",Alamat, Id_Order], (dbErr, result) => {
+    db.query(query, [prev_image,Notes, "",Alamat, Id_Order], (dbErr, result) => {
       if (dbErr) {
         console.error('Error saving the image URL to the database:', dbErr);
         return res.status(500).json({ error: 'Error saving the image URL to the database' });
