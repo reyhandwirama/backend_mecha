@@ -329,7 +329,7 @@ app.post("/checkout", (req,res) =>{
     const sqlInsert = "INSERT INTO cartdetail (Id_Cart,Qty,Id_User,Id_Product,weight) VALUES(?, ?, ?, ?) ON DUPLICATE KEY UPDATE Qty = Qty + ?;";
     const sqlInsert1 = "INSERT IGNORE INTO cart VALUES(?, ?);";
 
-    db.query(sqlInsert, [Id_Cart,Qty,Id_User,Id_Product,Qty,Berat], (err,result) => {
+    db.query(sqlInsert, [Id_Cart,Qty,Id_User,Id_Product,Berat], (err,result) => {
         if (err) {
             console.error('Error submitting data:', err);
             res.status(500).json({ message: 'Error submitting data' });
