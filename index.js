@@ -4,6 +4,15 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const app = express();
 const mysql = require("mysql");
+const admin = require("firebase-admin");
+const serviceAccount = require("./serviceAccountKey.json")
+const multer = require("multer");
+const upload = multer();
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  storageBucket: "gs://mechanical-keyboard-1bc50.appspot.com",
+});
 
 const db = mysql.createPool({
   host: process.env.HOST,
@@ -368,10 +377,192 @@ app.post("/checkout", (req, res) => {
   });
 });
 
+app.post("/produk/add", upload.single("image"), async (req, res) => {
+  const {
+    Id_Product,
+    title,
+    summary,
+    highlight,
+    description,
+    category,
+    price,
+    qty,
+    weight,
+  } = req.body;
 
-app.post("/create-product" ,(req,res) => {
-  const
-})
+  const image = req.file; // Assuming you use middleware to handle file upload
+
+  try {
+    // Upload image to Firebase Storage
+    const bucket = admin.storage().bucket();
+    const file = bucket.file(`images/${Id_Product}`);
+    await file.save(image.buffer, {
+      metadata: {
+        contentType: image.mimetype,
+      },
+    });
+
+    // Get public URL for the uploaded image
+    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${Id_Product}`;
+
+    // Insert data into MySQL with the public URL
+    const sqlInsert =
+      "INSERT INTO produk VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+    db.query(
+      sqlInsert,
+      [
+        Id_Product,
+        title,
+        summary,
+        highlight,
+        description,
+        publicUrl, // Use the public URL for the image
+        category,
+        price,
+        qty,
+        weight,
+      ],
+      (err, result) => {
+        if (err) {
+          console.error("Error submitting data:", err);
+          res.status(500).json({ message: "Error create product" });
+        } else {
+          res
+            .status(200)
+            .json({ message: "Data submitted successfully", data: result });
+        }
+      }
+    );
+  } catch (error) {
+    console.error("Error uploading image:", error);
+    res.status(500).json({ message: "Error uploading image" });
+  }
+});
+
+app.put("/produk/update/:Id_Product", upload.single("image"), async (req, res) => {
+  const Id_Product = req.params.Id_Product;
+  const {
+    title,
+    summary,
+    highlight,
+    description,
+    category,
+    price,
+    qty,
+    weight,
+  } = req.body;
+
+  try {
+    if (req.file) {
+      // Jika ada file gambar baru, proses upload ke Firebase Storage
+      const image = req.file;
+      const newFileName = `images/${Id_Product}_new`;
+      const bucket = admin.storage().bucket();
+      const file = bucket.file(newFileName);
+
+      // Upload image to Firebase Storage
+      await file.save(image.buffer, {
+        metadata: {
+          contentType: image.mimetype,
+        },
+        resumable: false,
+      });
+
+      // Get public URL for the uploaded image
+      const newImageUrl = `https://storage.googleapis.com/${bucket.name}/${newFileName}`;
+
+      // Update kolom 'image' dengan URL gambar baru di database
+      const sqlUpdateImage = `
+        UPDATE produk
+        SET
+          title = ?,
+          summary = ?,
+          highlight = ?,
+          description = ?,
+          image = ?,
+          category = ?,
+          price = ?,
+          qty = ?,
+          weight = ?
+        WHERE Id_Product = ?;
+      `;
+
+      db.query(
+        sqlUpdateImage,
+        [
+          title,
+          summary,
+          highlight,
+          description,
+          newImageUrl, // Menggunakan URL gambar baru
+          category,
+          price,
+          qty,
+          weight,
+          Id_Product,
+        ],
+        (err, result) => {
+          if (err) {
+            console.error("Error updating data:", err);
+            res.status(500).json({ message: "Error updating product" });
+          } else {
+            if (result.affectedRows > 0) {
+              res.status(200).json({ message: "Data updated successfully", newImageUrl });
+            } else {
+              res.status(404).json({ message: "Product not found" });
+            }
+          }
+        }
+      );
+    } else {
+      // Jika tidak ada file gambar baru, lakukan update tanpa mengganti gambar
+      const sqlUpdate = `
+        UPDATE produk
+        SET
+          title = ?,
+          summary = ?,
+          highlight = ?,
+          description = ?,
+          category = ?,
+          price = ?,
+          qty = ?,
+          weight = ?
+        WHERE Id_Product = ?;
+      `;
+
+      db.query(
+        sqlUpdate,
+        [
+          title,
+          summary,
+          highlight,
+          description,
+          category,
+          price,
+          qty,
+          weight,
+          Id_Product,
+        ],
+        (err, result) => {
+          if (err) {
+            console.error("Error updating data:", err);
+            res.status(500).json({ message: "Error updating product" });
+          } else {
+            if (result.affectedRows > 0) {
+              res.status(200).json({ message: "Data updated successfully" });
+            } else {
+              res.status(404).json({ message: "Product not found" });
+            }
+          }
+        }
+      );
+    }
+  } catch (error) {
+    console.error("Error uploading image:", error);
+    res.status(500).json({ message: "Error uploading image" });
+  }
+});
+
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
