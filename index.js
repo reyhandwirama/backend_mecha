@@ -563,6 +563,47 @@ app.put("/produk/update/:Id_Product", upload.single("image"), async (req, res) =
   }
 });
 
+app.delete("/produk/delete/:Id_Product", async (req, res) => {
+  const Id_Product = req.params.Id_Product;
+
+  try {
+    // Ambil URL gambar produk sebelum menghapus
+    const sqlSelectImage = "SELECT image FROM produk WHERE Id_Product = ?";
+    db.query(sqlSelectImage, [Id_Product], async (err, result) => {
+      if (err) {
+        console.error("Error selecting image:", err);
+        res.status(500).json({ message: "Error deleting product" });
+        return;
+      }
+
+      const imageUrl = result[0].image;
+
+      // Hapus file gambar dari Firebase Storage
+      const bucket = admin.storage().bucket();
+      const file = bucket.file(imageUrl.replace("https://storage.googleapis.com/", ""));
+      await file.delete();
+
+      // Hapus data produk dari database
+      const sqlDelete = "DELETE FROM produk WHERE Id_Product = ?";
+      db.query(sqlDelete, [Id_Product], (err, result) => {
+        if (err) {
+          console.error("Error deleting data:", err);
+          res.status(500).json({ message: "Error deleting product" });
+        } else {
+          if (result.affectedRows > 0) {
+            res.status(200).json({ message: "Product deleted successfully" });
+          } else {
+            res.status(404).json({ message: "Product not found" });
+          }
+        }
+      });
+    });
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    res.status(500).json({ message: "Error deleting product" });
+  }
+});
+
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
